@@ -33,8 +33,8 @@ def get_auth_service(uow: UOWDep) -> AuthService:
 
 AuthServiceDep = Annotated[AuthService, Depends(get_auth_service)]
 
-def get_idea_service(uow: UOWDep) -> IdeaService:
-    return IdeaService(uow)
+def get_idea_service(uow: UOWDep, cache: RedisCacheBackendDep) -> IdeaService:
+    return IdeaService(uow, cache)
 
 IdeaServiceDep = Annotated[IdeaService, Depends(get_idea_service)]
 

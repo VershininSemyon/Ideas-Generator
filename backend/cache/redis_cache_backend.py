@@ -28,3 +28,6 @@ class RedisCacheBackend:
 
     async def ttl(self, key: str) -> int:
         return await self.client.ttl(key)
+
+    async def delete(self, key: str) -> None:
+        await self.client.delete(key)
