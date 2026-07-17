@@ -19,3 +19,4 @@ class IdeaORM(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     user: Mapped["UserORM"] = relationship(back_populates="ideas")
+    idea_generations: Mapped[list["IdeaGenerationORM"]] = relationship(back_populates="idea")

@@ -3,22 +3,14 @@ import json
 
 from cache.redis_cache_backend import RedisCacheBackend
 from db.unitofwork import UnitOfWork
-from exceptions.idea import IdeaNotFoundError, IdeaOwnershipError
-from models.idea import IdeaORM
 from schemas.idea import IdeaCreateSchema, IdeaReadSchema, IdeaStatsSchema, IdeaUpdateSchema
+from services.validators import validate_idea_ownership
 
 
 class IdeaService:
     def __init__(self, uow: UnitOfWork, cache: RedisCacheBackend):
         self.uow = uow
         self.cache = cache
-
-    def _validate_ownership(self, idea: IdeaORM | IdeaReadSchema | None, user_id: str) -> None:
-        if not idea:
-            raise IdeaNotFoundError()
-
-        if idea.user_id != user_id:
-            raise IdeaOwnershipError()
 
     async def _remove_ideas_list_cache(self, user_id: str) -> None:
         key = f"ideas:user:{user_id}"
@@ -65,13 +57,13 @@ class IdeaService:
             idea_dict = json.loads(cached_data)
             schema_data = IdeaReadSchema.model_validate(idea_dict)
 
-            self._validate_ownership(schema_data, user_id)
+            validate_idea_ownership(schema_data, user_id)
             return schema_data
 
         async with self.uow:
             idea = await self.uow.idea_repository.get_by_id(idea_id)
 
-        self._validate_ownership(idea, user_id)
+        validate_idea_ownership(idea, user_id)
         result = IdeaReadSchema.model_validate(idea)
 
         cache_value = json.dumps(result.model_dump(), default=str)
@@ -82,7 +74,7 @@ class IdeaService:
     async def delete_idea(self, idea_id: str, user_id: str) -> None:
         async with self.uow:
             idea = await self.uow.idea_repository.get_by_id(idea_id)
-            self._validate_ownership(idea, user_id)
+            validate_idea_ownership(idea, user_id)
 
             await self.uow.idea_repository.delete(idea_id)
             await self.uow.commit()
@@ -93,7 +85,7 @@ class IdeaService:
     async def change_idea(self, idea_id: str, data: IdeaUpdateSchema, user_id: str) -> IdeaReadSchema:
         async with self.uow:
             idea = await self.uow.idea_repository.get_by_id(idea_id)
-            self._validate_ownership(idea, user_id)
+            validate_idea_ownership(idea, user_id)
 
             updated_idea = await self.uow.idea_repository.update(idea_id, data.model_dump())
             await self.uow.commit()

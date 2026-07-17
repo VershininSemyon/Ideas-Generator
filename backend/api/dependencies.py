@@ -9,6 +9,7 @@ from db.unitofwork import UnitOfWork
 from schemas.user import UserReadSchema
 from services.auth import AuthService
 from services.idea import IdeaService
+from services.idea_generation import IdeaGenerationService
 from services.user import UserService
 
 
@@ -37,6 +38,11 @@ def get_idea_service(uow: UOWDep, cache: RedisCacheBackendDep) -> IdeaService:
     return IdeaService(uow, cache)
 
 IdeaServiceDep = Annotated[IdeaService, Depends(get_idea_service)]
+
+def get_idea_generation_service(uow: UOWDep, cache: RedisCacheBackendDep) -> IdeaGenerationService:
+    return IdeaGenerationService(uow, cache)
+
+IdeaGenerationServiceDep = Annotated[IdeaGenerationService, Depends(get_idea_generation_service)]
 
 
 async def get_current_user(

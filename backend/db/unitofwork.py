@@ -1,5 +1,6 @@
 
 from db.repositories.idea import IdeaRepository
+from db.repositories.idea_generation import IdeaGenerationRepository
 from db.repositories.user import UserRepository
 
 
@@ -12,6 +13,7 @@ class UnitOfWork:
 
         self.user_repository = UserRepository(self.session)
         self.idea_repository = IdeaRepository(self.session)
+        self.idea_generation_repository = IdeaGenerationRepository(self.session)
 
     async def __aexit__(self, exc_type, exc, tb):
         try:
