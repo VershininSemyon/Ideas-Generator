@@ -3,6 +3,7 @@ from typing import Annotated
 
 from fastapi import Cookie, Depends, HTTPException, status
 
+from cache.cache_getter import CacheAsideEntityGetter
 from cache.redis_cache_backend import RedisCacheBackend, get_redis_client
 from db.database import async_session_factory
 from db.unitofwork import UnitOfWork
@@ -24,6 +25,11 @@ def get_redis_cache_backend() -> RedisCacheBackend:
 
 RedisCacheBackendDep = Annotated[RedisCacheBackend, Depends(get_redis_cache_backend)]
 
+def get_cache_aside_getter(cache: RedisCacheBackendDep) -> CacheAsideEntityGetter:
+    return CacheAsideEntityGetter(cache)
+
+CacheAsideGetterDep = Annotated[CacheAsideEntityGetter, Depends(get_cache_aside_getter)]
+
 def get_user_service(uow: UOWDep) -> UserService:
     return UserService(uow)
 
@@ -34,13 +40,18 @@ def get_auth_service(uow: UOWDep) -> AuthService:
 
 AuthServiceDep = Annotated[AuthService, Depends(get_auth_service)]
 
-def get_idea_service(uow: UOWDep, cache: RedisCacheBackendDep) -> IdeaService:
-    return IdeaService(uow, cache)
+def get_idea_service(uow: UOWDep, cache: RedisCacheBackendDep, cache_getter: CacheAsideGetterDep) -> IdeaService:
+    return IdeaService(uow, cache, cache_getter)
 
 IdeaServiceDep = Annotated[IdeaService, Depends(get_idea_service)]
 
-def get_idea_generation_service(uow: UOWDep, cache: RedisCacheBackendDep) -> IdeaGenerationService:
-    return IdeaGenerationService(uow, cache)
+def get_idea_generation_service(
+    uow: UOWDep,
+    cache: RedisCacheBackendDep,
+    idea_service: IdeaServiceDep,
+    cache_getter: CacheAsideGetterDep
+) -> IdeaGenerationService:
+    return IdeaGenerationService(uow, cache, idea_service, cache_getter)
 
 IdeaGenerationServiceDep = Annotated[IdeaGenerationService, Depends(get_idea_generation_service)]
 

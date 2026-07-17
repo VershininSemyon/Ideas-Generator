@@ -33,3 +33,4 @@ class IdeaUpdateSchema(BaseModel):
 
 class IdeaStatsSchema(BaseModel):
     ideas_count: int
+    generation_distribution: dict[int, list[str]]
