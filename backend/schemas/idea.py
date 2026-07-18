@@ -32,5 +32,8 @@ class IdeaUpdateSchema(BaseModel):
 
 
 class IdeaStatsSchema(BaseModel):
-    ideas_count: int
-    generation_distribution: dict[int, list[str]]
+    total_ideas_count: int
+    total_generations_count: int
+    generation_сount_distribution: dict[int, list[str]]
+    generation_type_distribution: dict[str, int]
+    average_generations_per_idea: float

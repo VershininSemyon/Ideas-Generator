@@ -30,8 +30,8 @@ def get_cache_aside_getter(cache: RedisCacheBackendDep) -> CacheAsideEntityGette
 
 CacheAsideGetterDep = Annotated[CacheAsideEntityGetter, Depends(get_cache_aside_getter)]
 
-def get_user_service(uow: UOWDep) -> UserService:
-    return UserService(uow)
+def get_user_service(uow: UOWDep, cache: RedisCacheBackendDep) -> UserService:
+    return UserService(uow, cache)
 
 UserServiceDep = Annotated[UserService, Depends(get_user_service)]
 
@@ -48,10 +48,10 @@ IdeaServiceDep = Annotated[IdeaService, Depends(get_idea_service)]
 def get_idea_generation_service(
     uow: UOWDep,
     cache: RedisCacheBackendDep,
-    idea_service: IdeaServiceDep,
-    cache_getter: CacheAsideGetterDep
+    cache_getter: CacheAsideGetterDep,
+    idea_service: IdeaServiceDep
 ) -> IdeaGenerationService:
-    return IdeaGenerationService(uow, cache, idea_service, cache_getter)
+    return IdeaGenerationService(uow, cache, cache_getter, idea_service)
 
 IdeaGenerationServiceDep = Annotated[IdeaGenerationService, Depends(get_idea_generation_service)]
 

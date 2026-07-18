@@ -12,13 +12,13 @@ class IdeaGenerationService:
         self,
         uow: UnitOfWork,
         cache: RedisCacheBackend,
-        idea_service: IdeaService,
-        cache_getter: CacheAsideEntityGetter
+        cache_getter: CacheAsideEntityGetter,
+        idea_service: IdeaService
     ):
         self.uow = uow
         self.cache = cache
-        self.idea_service = idea_service
         self.cache_getter = cache_getter
+        self.idea_service = idea_service
 
     async def _remove_generations_list_cache(self, user_id: str, idea_id: str) -> None:
         await self.cache.delete(f"ideas:user:{user_id}:idea:{idea_id}:generations")
@@ -27,6 +27,7 @@ class IdeaGenerationService:
         await self.cache.delete(f"ideas:user:{user_id}:idea:{idea_id}:generation:{gen_id}")
 
     async def get_idea_generations(self, idea_id: str, user_id: str) -> list[IdeaGenerationReadSchema]:
+        # Валидация принадлежности idea к user
         await self.idea_service.get_idea_by_id(idea_id, user_id)
 
         key = f"ideas:user:{user_id}:idea:{idea_id}:generations"
@@ -43,6 +44,7 @@ class IdeaGenerationService:
         )
 
     async def create_idea_generation(self, idea_id: str, data: IdeaGenerationCreateSchema, user_id: str) -> None:
+        # Валидация принадлежности idea к user
         await self.idea_service.get_idea_by_id(idea_id, user_id)
 
         data_dict = {
@@ -58,6 +60,7 @@ class IdeaGenerationService:
         await self._remove_generations_list_cache(user_id, idea_id)
 
     async def get_idea_generation(self, gen_id: str, idea_id: str, user_id: str) -> IdeaGenerationReadSchema:
+        # Валидация принадлежности idea к user
         idea = await self.idea_service.get_idea_by_id(idea_id, user_id)
 
         key = f"ideas:user:{user_id}:idea:{idea_id}:generation:{gen_id}"
@@ -77,6 +80,7 @@ class IdeaGenerationService:
         return generation
 
     async def delete_idea_generation(self, gen_id: str, idea_id: str, user_id: str) -> None:
+        # Валидация принадлежности idea к user
         idea = await self.idea_service.get_idea_by_id(idea_id, user_id)
 
         key = f"ideas:user:{user_id}:idea:{idea_id}:generation:{gen_id}"

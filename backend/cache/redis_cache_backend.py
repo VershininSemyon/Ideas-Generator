@@ -31,3 +31,7 @@ class RedisCacheBackend:
 
     async def delete(self, key: str) -> None:
         await self.client.delete(key)
+
+    async def delete_by_pattern(self, pattern: str) -> None:
+        async for key in self.client.scan_iter(pattern):
+            await self.client.unlink(key)

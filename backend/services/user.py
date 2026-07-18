@@ -1,4 +1,5 @@
 
+from cache.redis_cache_backend import RedisCacheBackend
 from db.unitofwork import UnitOfWork
 from exceptions.user import EmailAlreadyExistsError, UsernameAlreadyExistsError
 from integrations.hashing import hash_password
@@ -6,8 +7,9 @@ from schemas.user import UserCreateSchema, UserReadSchema, UserUpdateSchema
 
 
 class UserService:
-    def __init__(self, uow: UnitOfWork):
+    def __init__(self, uow: UnitOfWork, cache: RedisCacheBackend):
         self.uow = uow
+        self.cache = cache
 
     async def create_user(self, data: UserCreateSchema) -> UserReadSchema:
         async with self.uow:
@@ -30,6 +32,9 @@ class UserService:
     async def delete_user(self, user_id: str) -> None:
         async with self.uow:
             await self.uow.user_repository.delete(user_id)
+            await self.uow.commit()
+        
+        await self.cache.delete_by_pattern(f"ideas:user:{user_id}*")
 
     async def change_user(self, current_user: UserReadSchema, data: UserUpdateSchema) -> UserReadSchema:
         async with self.uow:

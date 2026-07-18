@@ -3,6 +3,7 @@ from cache.cache_getter import CacheAsideEntityGetter
 from cache.redis_cache_backend import RedisCacheBackend
 from db.unitofwork import UnitOfWork
 from schemas.idea import IdeaCreateSchema, IdeaReadSchema, IdeaStatsSchema, IdeaUpdateSchema
+from schemas.idea_generation import TypeEnum
 from services.validators import validate_idea_ownership
 
 
@@ -17,6 +18,9 @@ class IdeaService:
 
     async def _remove_idea_cache(self, user_id: str, idea_id: str) -> None:
         await self.cache.delete(f"ideas:user:{user_id}:idea:{idea_id}")
+
+    async def _remove_idea_generations_cache(self, user_id: str, idea_id: str) -> None:
+        await self.cache.delete_by_pattern(f"ideas:user:{user_id}:idea:{idea_id}:generation*")
 
     async def create_idea(self, data: IdeaCreateSchema, user_id: str) -> IdeaReadSchema:
         async with self.uow:
@@ -68,6 +72,7 @@ class IdeaService:
 
         await self._remove_ideas_list_cache(user_id)
         await self._remove_idea_cache(user_id, idea_id)
+        await self._remove_idea_generations_cache(user_id, idea_id)
 
     async def change_idea(self, idea_id: str, data: IdeaUpdateSchema, user_id: str) -> IdeaReadSchema:
         async with self.uow:
@@ -84,19 +89,32 @@ class IdeaService:
 
     async def get_user_ideas_stats(self, user_id: str) -> IdeaStatsSchema:
         async with self.uow:
-            ideas_count = await self.uow.idea_repository.get_user_ideas_count(user_id)
-            generation_distribution = await self.uow.idea_repository.get_ideas_generation_distribution(user_id)
+            total_ideas_count = await self.uow.idea_repository.get_total_ideas_count(user_id)
+            total_generations_count = await self.uow.idea_repository.get_total_generations_count(user_id)
+            count_distribution = await self.uow.idea_repository.get_ideas_generation_count_distribution(user_id)
+            type_distribution = await self.uow.idea_repository.get_ideas_generation_type_distribution(user_id)
+            avg_generations = await self.uow.idea_repository.get_average_generations_per_idea(user_id)
 
         generation_distribution_dict = {}
-        for gen in generation_distribution:
+        for gen in count_distribution:
             key, value = gen[2], gen[1]
 
             if key in generation_distribution_dict:
                 generation_distribution_dict[key].append(value)
             else:
                 generation_distribution_dict[key] = [value]
-        
+
+        type_distribution_dict = {enum_item.value: 0 for enum_item in TypeEnum}
+
+        for row in type_distribution:
+            gen_type = row[0]
+            type_key = gen_type.value if hasattr(gen_type, "value") else str(gen_type)
+            type_distribution_dict[type_key] = row[1]
+
         return IdeaStatsSchema(
-            ideas_count=ideas_count,
-            generation_distribution=generation_distribution_dict
+            total_ideas_count=total_ideas_count,
+            total_generations_count=total_generations_count,
+            generation_сount_distribution=generation_distribution_dict,
+            generation_type_distribution=type_distribution_dict,
+            average_generations_per_idea=round(avg_generations, 2)
         )

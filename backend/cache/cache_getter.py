@@ -41,5 +41,5 @@ class CacheAsideEntityGetter:
             schema_instance = schema_class.model_validate(entity)
             cache_value = json.dumps(schema_instance.model_dump(), default=str)
 
-        await self.cache.set_value(key, cache_value, ttl=ttl)
+        await self.cache.set_value(key, cache_value, ttl)
         return schema_instances if is_list else schema_instance
