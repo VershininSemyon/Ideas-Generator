@@ -44,13 +44,17 @@ class RedisSettings(BaseModel):
         return f"redis://:{self.REDIS_PASSWORD}@redis:{self.REDIS_PORT}/0"
 
     @property
-    def celery_result_backend(self) -> str:
+    def taskiq_result_backend(self) -> str:
         return f"redis://:{self.REDIS_PASSWORD}@redis:{self.REDIS_PORT}/1"
 
 
 class RateLimitSettings(BaseModel):
     RATE_LIMIT_REQUESTS_LIMIT: int = 25
     RATE_LIMIT_WINDOW_SECONDS: int = 60
+
+
+class LLMSettings(BaseModel):
+    LLM_API_KEY: str
 
 
 class Settings(
@@ -61,6 +65,7 @@ class Settings(
     PasswordSettings,
     RedisSettings,
     RateLimitSettings,
+    LLMSettings,
     BaseSettings
 ):
     model_config = SettingsConfigDict(

@@ -35,7 +35,8 @@ class IdeaService:
         key = f"ideas:user:{user_id}"
 
         async def fetch_from_db():
-            return await self.uow.idea_repository.get_user_ideas(user_id)
+            async with self.uow:
+                return await self.uow.idea_repository.get_user_ideas(user_id)
 
         return await self.cache_getter.get_entity(
             key=key,
@@ -49,7 +50,8 @@ class IdeaService:
         key = f"ideas:user:{user_id}:idea:{idea_id}"
 
         async def fetch_from_db():
-            return await self.uow.idea_repository.get_by_id(idea_id)
+            async with self.uow:
+                return await self.uow.idea_repository.get_by_id(idea_id)
 
         idea = await self.cache_getter.get_entity(
             key=key,

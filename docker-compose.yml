@@ -93,34 +93,24 @@ services:
     depends_on:
       - redis
 
-  celery:
+  taskiq_worker:
     build:
       context: ./backend
-    container_name: celery_worker
-    command: celery -A background.celery_app:celery_app worker --loglevel=info
+    container_name: taskiq_worker
+    command: taskiq worker background.broker:broker --workers 2
     env_file:
       - .env
+    environment:
+      - PYTHONPATH=/app
     networks:
       - app_net
     depends_on:
-      - backend
-      - redis
+      backend:
+        condition: service_started
+      redis:
+        condition: service_healthy
+    restart: on-failure
 
-  flower:
-    build:
-      context: ./backend
-    container_name: celery_flower
-    command: celery -A background.celery_app:celery_app flower --basic_auth=${FLOWER_USER}:${FLOWER_PASSWORD}
-    ports:
-      - "5555:5555"
-    env_file:
-      - .env
-    networks:
-      - app_net
-    depends_on:
-      - celery
-      - redis
-  
   prometheus:
     image: prom/prometheus:v2.52.0
     container_name: prometheus

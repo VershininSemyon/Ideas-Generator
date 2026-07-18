@@ -7,6 +7,7 @@ from cache.cache_getter import CacheAsideEntityGetter
 from cache.redis_cache_backend import RedisCacheBackend, get_redis_client
 from db.database import async_session_factory
 from db.unitofwork import UnitOfWork
+from integrations.ai import llm_client
 from schemas.user import UserReadSchema
 from services.auth import AuthService
 from services.idea import IdeaService
@@ -14,8 +15,13 @@ from services.idea_generation import IdeaGenerationService
 from services.user import UserService
 
 
-def get_uow() -> UnitOfWork:
-    return UnitOfWork(async_session_factory)
+async def get_uow():
+    uow = UnitOfWork(async_session_factory)
+    try:
+        yield uow
+    finally:
+        if hasattr(uow, 'session') and uow.session:
+            await uow.session.close()
 
 UOWDep = Annotated[UnitOfWork, Depends(get_uow)]
 
@@ -51,7 +57,7 @@ def get_idea_generation_service(
     cache_getter: CacheAsideGetterDep,
     idea_service: IdeaServiceDep
 ) -> IdeaGenerationService:
-    return IdeaGenerationService(uow, cache, cache_getter, idea_service)
+    return IdeaGenerationService(uow, cache, cache_getter, idea_service, llm_client)
 
 IdeaGenerationServiceDep = Annotated[IdeaGenerationService, Depends(get_idea_generation_service)]
 

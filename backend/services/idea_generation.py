@@ -1,7 +1,10 @@
 
+
+from background.tasks import generate_idea
 from cache.cache_getter import CacheAsideEntityGetter
 from cache.redis_cache_backend import RedisCacheBackend
 from db.unitofwork import UnitOfWork
+from integrations.ai import LlmApiClient
 from schemas.idea_generation import IdeaGenerationCreateSchema, IdeaGenerationReadSchema
 from services.idea import IdeaService
 from services.validators import validate_idea_generation_ownership
@@ -13,12 +16,14 @@ class IdeaGenerationService:
         uow: UnitOfWork,
         cache: RedisCacheBackend,
         cache_getter: CacheAsideEntityGetter,
-        idea_service: IdeaService
+        idea_service: IdeaService,
+        llm_client: LlmApiClient
     ):
         self.uow = uow
         self.cache = cache
         self.cache_getter = cache_getter
         self.idea_service = idea_service
+        self.llm_client = llm_client
 
     async def _remove_generations_list_cache(self, user_id: str, idea_id: str) -> None:
         await self.cache.delete(f"ideas:user:{user_id}:idea:{idea_id}:generations")
@@ -33,7 +38,8 @@ class IdeaGenerationService:
         key = f"ideas:user:{user_id}:idea:{idea_id}:generations"
 
         async def fetch_from_db():
-            return await self.uow.idea_generation_repository.get_idea_generations(idea_id)
+            async with self.uow:
+                return await self.uow.idea_generation_repository.get_idea_generations(idea_id)
 
         return await self.cache_getter.get_entity(
             key=key,
@@ -45,19 +51,29 @@ class IdeaGenerationService:
 
     async def create_idea_generation(self, idea_id: str, data: IdeaGenerationCreateSchema, user_id: str) -> None:
         # Валидация принадлежности idea к user
-        await self.idea_service.get_idea_by_id(idea_id, user_id)
+        idea = await self.idea_service.get_idea_by_id(idea_id, user_id)
 
         data_dict = {
             **data.model_dump(),
             "idea_id": idea_id,
-            "result": "to be continued"
+            "result": "Генерация контента началась... Пожалуйста, подождите."
         }
 
         async with self.uow:
-            await self.uow.idea_generation_repository.create(data_dict)
+            generation = await self.uow.idea_generation_repository.create(data_dict)
             await self.uow.commit()
+            gen_id = str(generation.id)
 
         await self._remove_generations_list_cache(user_id, idea_id)
+
+        prompt = self.llm_client.produce_prompt(
+            idea_title=idea.title,
+            idea_content=idea.content,
+            answer_type=data.type,
+            user_prompt=data.prompt
+        )
+
+        await generate_idea.kiq(gen_id, prompt, user_id, idea_id)
 
     async def get_idea_generation(self, gen_id: str, idea_id: str, user_id: str) -> IdeaGenerationReadSchema:
         # Валидация принадлежности idea к user
@@ -66,7 +82,8 @@ class IdeaGenerationService:
         key = f"ideas:user:{user_id}:idea:{idea_id}:generation:{gen_id}"
 
         async def fetch_from_db():
-            return await self.uow.idea_generation_repository.get_by_id(gen_id)
+            async with self.uow:
+                return await self.uow.idea_generation_repository.get_by_id(gen_id)
 
         generation = await self.cache_getter.get_entity(
             key=key,
@@ -86,7 +103,8 @@ class IdeaGenerationService:
         key = f"ideas:user:{user_id}:idea:{idea_id}:generation:{gen_id}"
 
         async def fetch_from_db():
-            return await self.uow.idea_generation_repository.get_by_id(gen_id)
+            async with self.uow:
+                return await self.uow.idea_generation_repository.get_by_id(gen_id)
 
         generation = await self.cache_getter.get_entity(
             key=key,
