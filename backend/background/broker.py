@@ -20,4 +20,3 @@ broker = ListQueueBroker(
     )
 )
 
-import background.tasks

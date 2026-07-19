@@ -1,5 +1,4 @@
 
-
 from background.tasks import generate_idea
 from cache.cache_getter import CacheAsideEntityGetter
 from cache.redis_cache_backend import RedisCacheBackend
