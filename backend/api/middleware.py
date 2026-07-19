@@ -12,14 +12,19 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         self,
         app,
         requests_limit: int,
-        window_seconds: int
+        window_seconds: int,
+        excluded_routes: list[str] | None = None
     ):
         super().__init__(app)
         self.cache = RedisCacheBackend(get_redis_client())
         self.requests_limit = requests_limit
         self.window_seconds = window_seconds
+        self.excluded_routes = excluded_routes
 
     async def dispatch(self, request: Request, call_next):
+        if any(request.url.path.startswith(route) for route in self.excluded_routes):
+            return await call_next(request)
+
         client_ip = request.headers.get("X-Forwarded-For") or request.client.host
         redis_key = f"rate_limit:{client_ip}"
 

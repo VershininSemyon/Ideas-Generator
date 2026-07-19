@@ -37,7 +37,14 @@ if settings.CORS_ORIGINS:
 app.add_middleware(
     RateLimitMiddleware,
     requests_limit=settings.RATE_LIMIT_REQUESTS_LIMIT,
-    window_seconds=settings.RATE_LIMIT_WINDOW_SECONDS
+    window_seconds=settings.RATE_LIMIT_WINDOW_SECONDS,
+    excluded_routes=[
+        "/openapi.json",
+        "/docs",
+        "/redoc",
+        "/metrics",
+        "/healthcheck"
+    ]
 )
 
 app.include_router(healthcheck_router)
