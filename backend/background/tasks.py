@@ -29,4 +29,8 @@ async def generate_idea(gen_id: str, prompt: str, user_id: str, idea_id: str) ->
     await cache.delete(f"ideas:user:{user_id}:idea:{idea_id}:generations")
     await cache.delete(f"ideas:user:{user_id}:idea:{idea_id}:generation:{gen_id}")
 
-    return "Success"
+    return {
+        "status": "Success",
+        "idea_id": idea_id,
+        "message": "Генерация успешно завершена"
+    }

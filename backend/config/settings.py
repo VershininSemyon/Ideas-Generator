@@ -48,6 +48,10 @@ class RedisSettings(BaseModel):
         return f"redis://:{self.REDIS_PASSWORD}@redis:{self.REDIS_PORT}/1"
 
 
+class TaskIQSettings(BaseModel):
+    TASKIQ_DASHBOARD_API_TOKEN: str
+
+
 class RateLimitSettings(BaseModel):
     RATE_LIMIT_REQUESTS_LIMIT: int = 25
     RATE_LIMIT_WINDOW_SECONDS: int = 60
@@ -64,6 +68,7 @@ class Settings(
     JwtSettings,
     PasswordSettings,
     RedisSettings,
+    TaskIQSettings,
     RateLimitSettings,
     LLMSettings,
     BaseSettings

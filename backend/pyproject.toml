@@ -23,11 +23,12 @@ dependencies = [
     "gigachat>=0.2.1",
     "taskiq>=0.12.4",
     "taskiq-redis>=1.2.3",
+    "taskiq-dashboard>=0.4.4",
 ]
 
 [tool.ruff]
 line-length = 120
-exclude = [".venv", "venv", ".env", "env", "alembic", "migrations"]
+exclude = [".venv", "venv", ".env", "env", "alembic", "migrations", "background/broker.py"]
 
 [tool.ruff.lint]
 select = ["E", "W", "F", "I"]
