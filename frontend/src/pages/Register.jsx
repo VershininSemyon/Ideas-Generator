@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { register } from '../services/authService.js';
 import Input from '../components/ui/Input.jsx';
+import PasswordInput from '../components/ui/PasswordInput.jsx';
 import Button from '../components/ui/Button.jsx';
 
 export default function Register() {
@@ -35,9 +36,8 @@ export default function Register() {
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                     required
                 />
-                <Input
+                <PasswordInput
                     label="Пароль"
-                    type="password"
                     value={formData.password}
                     onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                     required

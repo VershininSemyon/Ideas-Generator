@@ -3,6 +3,7 @@ import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth.js';
 import { login as loginService } from '../services/authService.js';
 import Input from '../components/ui/Input.jsx';
+import PasswordInput from '../components/ui/PasswordInput.jsx';
 import Button from '../components/ui/Button.jsx';
 
 export default function Login() {
@@ -34,9 +35,8 @@ export default function Login() {
                     onChange={(e) => setFormData({ ...formData, username: e.target.value })}
                     required
                 />
-                <Input
+                <PasswordInput
                     label="Пароль"
-                    type="password"
                     value={formData.password}
                     onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                     required
