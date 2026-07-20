@@ -1,5 +1,8 @@
+
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import {
     getIdea, updateIdea, deleteIdea, getGenerations, createGeneration, deleteGeneration
 } from '../services/ideaService.js';
@@ -15,14 +18,28 @@ export default function IdeaDetail() {
     const [formData, setFormData] = useState({ title: '', content: '', is_favorite: false });
     const [genForm, setGenForm] = useState({ type: 'summary', prompt: '' });
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
 
     const fetchData = async () => {
+        setLoading(true);
+        setError(null);
         try {
             const [ideaData, genData] = await Promise.all([getIdea(id), getGenerations(id)]);
             setIdea(ideaData);
             setFormData({ title: ideaData.title, content: ideaData.content, is_favorite: ideaData.is_favorite });
-            setGenerations(genData);
+            
+            const sortedGens = [...genData].sort((a, b) => 
+                new Date(b.created_at || 0) - new Date(a.created_at || 0)
+            );
+            setGenerations(sortedGens);
         } catch (err) {
+            if (err.response?.status === 422) {
+                setError('Неверный формат идентификатора идеи в адресной строке.');
+            } else if (err.response?.status === 404) {
+                setError('Идея не найдена.');
+            } else {
+                setError('Ошибка загрузки данных.');
+            }
             console.error(err);
         } finally {
             setLoading(false);
@@ -78,6 +95,16 @@ export default function IdeaDetail() {
     };
 
     if (loading) return <div className="text-center py-10">Загрузка...</div>;
+    
+    if (error) {
+        return (
+            <div className="text-center py-10 max-w-2xl mx-auto">
+                <p className="text-red-600 text-lg mb-6 font-medium">{error}</p>
+                <Button onClick={() => navigate('/ideas')}>Вернуться к списку идей</Button>
+            </div>
+        );
+    }
+
     if (!idea) return <div className="text-center py-10">Идея не найдена</div>;
 
     return (
@@ -160,14 +187,26 @@ export default function IdeaDetail() {
                     {generations.map((gen) => (
                         <div key={gen.id} className="border border-gray-200 rounded-lg p-4">
                             <div className="flex justify-between items-start mb-2">
-                                <span className="text-sm font-semibold text-blue-600 uppercase">{gen.type}</span>
+                                <div className="flex items-center gap-2">
+                                    <span className="text-sm font-semibold text-blue-600 uppercase bg-blue-50 px-2 py-1 rounded">{gen.type}</span>
+                                    {gen.created_at && (
+                                        <span className="text-xs text-gray-400">
+                                            {new Date(gen.created_at).toLocaleString('ru-RU')}
+                                        </span>
+                                    )}
+                                </div>
                                 <Button variant="danger" className="text-xs py-1 px-2" onClick={() => handleDeleteGen(gen.id)}>Удалить</Button>
                             </div>
-                            <p className="text-sm text-gray-500 mb-2">{gen.prompt}</p>
-                            <p className="text-gray-800 whitespace-pre-wrap">{gen.result}</p>
+                            <p className="text-sm text-gray-500 mb-3 italic">Промпт: {gen.prompt}</p>
+                            
+                            <div className="prose prose-sm max-w-none prose-blue">
+                                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                    {gen.result || '_Нет результата_'}
+                                </ReactMarkdown>
+                            </div>
                         </div>
                     ))}
-                    {generations.length === 0 && <p className="text-gray-500">Нет генераций.</p>}
+                    {generations.length === 0 && <p className="text-gray-500 text-center py-4">Пока нет генераций для этой идеи.</p>}
                 </div>
             </div>
         </div>
