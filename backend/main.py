@@ -25,15 +25,6 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 
-if settings.CORS_ORIGINS:
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=settings.CORS_ORIGINS,
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
-    )
-
 app.add_middleware(
     RateLimitMiddleware,
     requests_limit=settings.RATE_LIMIT_REQUESTS_LIMIT,
@@ -46,6 +37,17 @@ app.add_middleware(
         "/healthcheck"
     ]
 )
+
+if settings.CORS_ORIGINS:
+    import logging
+    logging.critical(settings.CORS_ORIGINS)
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=settings.CORS_ORIGINS,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
 
 app.include_router(healthcheck_router)
 app.include_router(user_router)
