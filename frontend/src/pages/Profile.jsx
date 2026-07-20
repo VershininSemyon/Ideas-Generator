@@ -6,7 +6,7 @@ import Input from '../components/ui/Input.jsx';
 import Button from '../components/ui/Button.jsx';
 
 export default function Profile() {
-    const { logout } = useAuth();
+    const { logout, updateUser } = useAuth();
     const navigate = useNavigate();
     const [user, setUser] = useState(null);
     const [formData, setFormData] = useState({ username: '', email: '' });
@@ -33,6 +33,7 @@ export default function Profile() {
         try {
             const updated = await updateMe(formData);
             setUser(updated);
+            updateUser(updated);
             setIsEditing(false);
         } catch (err) {
             console.error(err);

@@ -1,8 +1,16 @@
-import { Navigate } from 'react-router-dom';
+import { useEffect } from 'react';
+import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth.js';
 
 export default function ProtectedRoute({ children }) {
-    const { user, loading } = useAuth();
+    const { user, loading, login } = useAuth();
+    const location = useLocation();
+
+    useEffect(() => {
+        if (!user && !loading) {
+            login();
+        }
+    }, [user, loading, login]);
 
     if (loading) {
         return (
@@ -13,7 +21,7 @@ export default function ProtectedRoute({ children }) {
     }
 
     if (!user) {
-        return <Navigate to="/login" replace />;
+        return <Navigate to="/login" state={{ from: location }} replace />;
     }
 
     return children;

@@ -1,21 +1,24 @@
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth.js';
-import { login } from '../services/authService.js';
+import { login as loginService } from '../services/authService.js';
 import Input from '../components/ui/Input.jsx';
 import Button from '../components/ui/Button.jsx';
 
 export default function Login() {
     const [formData, setFormData] = useState({ username: '', password: '' });
-    const { login: setAuthUser } = useAuth();
+    const { login } = useAuth();
     const navigate = useNavigate();
+    const location = useLocation();
+
+    const from = location.state?.from?.pathname || '/ideas';
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            const data = await login(formData);
-            setAuthUser(data.decoded);
-            navigate('/ideas');
+            await loginService(formData);
+            await login();
+            navigate(from, { replace: true });
         } catch (err) {
             console.error('Login error:', err);
         }
