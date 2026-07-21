@@ -39,8 +39,6 @@ app.add_middleware(
 )
 
 if settings.CORS_ORIGINS:
-    import logging
-    logging.critical(settings.CORS_ORIGINS)
     app.add_middleware(
         CORSMiddleware,
         allow_origins=settings.CORS_ORIGINS,
