@@ -4,7 +4,7 @@ from typing import Annotated
 from fastapi import Cookie, Depends, HTTPException, status
 
 from cache.cache_getter import CacheAsideEntityGetter
-from cache.redis_cache_backend import RedisCacheBackend, get_redis_client
+from cache.redis_cache_backend import RedisCacheBackend
 from db.database import async_session_factory
 from db.unitofwork import UnitOfWork
 from integrations.ai import llm_client
@@ -26,8 +26,7 @@ async def get_uow():
 UOWDep = Annotated[UnitOfWork, Depends(get_uow)]
 
 def get_redis_cache_backend() -> RedisCacheBackend:
-    client = get_redis_client()
-    return RedisCacheBackend(client)
+    return RedisCacheBackend()
 
 RedisCacheBackendDep = Annotated[RedisCacheBackend, Depends(get_redis_cache_backend)]
 

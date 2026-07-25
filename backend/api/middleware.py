@@ -4,7 +4,7 @@ import json
 from fastapi import Request, Response, status
 from starlette.middleware.base import BaseHTTPMiddleware
 
-from cache.redis_cache_backend import RedisCacheBackend, get_redis_client
+from cache.redis_cache_backend import RedisCacheBackend
 
 
 class RateLimitMiddleware(BaseHTTPMiddleware):
@@ -16,7 +16,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         excluded_routes: list[str] | None = None
     ):
         super().__init__(app)
-        self.cache = RedisCacheBackend(get_redis_client())
+        self.cache = RedisCacheBackend()
         self.requests_limit = requests_limit
         self.window_seconds = window_seconds
         self.excluded_routes = excluded_routes

@@ -2,7 +2,8 @@
 import asyncio
 
 from background.broker import broker
-from cache.redis_cache_backend import RedisCacheBackend, get_redis_client
+from cache.redis_cache_backend import RedisCacheBackend
+from cache.redis_manager import redis_manager
 from db.database import async_session_factory
 from db.unitofwork import UnitOfWork
 from integrations.ai import llm_client
@@ -15,8 +16,8 @@ async def generate_idea(gen_id: str, prompt: str, user_id: str, idea_id: str) ->
     except Exception as e:
         ai_result = f"Ошибка при генерации контента нейросетью: {str(e)}"
 
-    redis_client = get_redis_client()
-    cache = RedisCacheBackend(redis_client)
+    await redis_manager.connect()
+    cache = RedisCacheBackend()
     uow = UnitOfWork(async_session_factory)
 
     async with uow:

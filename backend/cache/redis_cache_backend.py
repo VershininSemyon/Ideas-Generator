@@ -3,19 +3,13 @@ from typing import Any
 
 from redis import asyncio
 
-from config.settings import settings
-
-
-def get_redis_client() -> asyncio.Redis:
-    return asyncio.from_url(
-        settings.redis_url,
-        decode_responses=True
-    )
+from cache.redis_manager import redis_manager
 
 
 class RedisCacheBackend:
-    def __init__(self, client: asyncio.Redis):
-        self.client = client
+    @property
+    def client(self) -> asyncio.Redis:
+        return redis_manager.client
 
     async def set_value(self, key: str, value: Any, ttl: int | None = None) -> None:
         await self.client.set(key, value, ex=ttl)
