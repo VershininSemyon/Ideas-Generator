@@ -2,7 +2,9 @@
 from taskiq_redis import ListQueueBroker, RedisAsyncResultBackend
 from taskiq_dashboard import DashboardMiddleware
 
+from cache.redis_manager import redis_manager
 from config.settings import settings
+
 
 redis_options = {
     "socket_timeout": None,
@@ -30,6 +32,16 @@ broker = (
         )
     )
 )
+
+
+@broker.on_event("startup")
+async def startup():
+    await redis_manager.connect()
+
+
+@broker.on_event("shutdown")
+async def shutdown():
+    await redis_manager.disconnect()
 
 
 import background.tasks

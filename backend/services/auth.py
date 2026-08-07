@@ -34,6 +34,10 @@ class AuthService:
 
     def refresh_token(self, refresh_token: str) -> str:
         data = decode_token(refresh_token)
+
+        if data.get('token_type') != 'refresh':
+            raise InvalidTokenTypeError()
+
         user_data = {
             "id": data['id'],
             "username": data['username'],
@@ -46,7 +50,7 @@ class AuthService:
     async def authenticate_user(self, access_token: str) -> UserReadSchema:
         data = decode_token(access_token)
 
-        if data['token_type'] != 'access':
+        if data.get('token_type') != 'access':
             raise InvalidTokenTypeError()
 
         async with self.uow:
